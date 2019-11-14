@@ -1,6 +1,8 @@
 
 # Axium Crisis
 
+![Axium Crisis](./assets/axium-crisis.jpg)
+
 Save entire experiment process while training deep learning models with
 pytorch. This includes:
 

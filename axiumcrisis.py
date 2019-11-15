@@ -6,6 +6,7 @@ import random
 import re
 import shutil
 import sqlite3
+import sys
 import time
 
 import numpy
@@ -60,6 +61,13 @@ def regularize_path(*args):
     path = ''.join('/' + str(i) + '/' for i in args)
     path = re.sub(r'/+', r'/', re.sub(r'\\', r'/', path))[1:-1]
     return ('/' if is_root else '') + path
+
+
+def debug_log(*args):
+    data = ' '.join(str(i) for i in args)
+    print(data, end='\n')
+    sys.stdout.flush()
+    return
 
 
 class InoRI:
@@ -714,7 +722,12 @@ class KuroyuKI:
 
     def recall(self, cnt, timestamp, *args):
         """ recall(cnt, timestamp, ...) -- execute history traceback """
-        if cnt == -1 or cnt not in self._recall_list:
+        if cnt == -1:
+            return
+        if args[0] == 'epoch-begin':
+            epoch = args[1]
+            debug_log('epoch %d: from recall' % epoch)
+        if cnt not in self._recall_list:
             return
         if args[0] == 'init':
             if args[1] != self._module_version:
@@ -832,8 +845,9 @@ class KuroyuKI:
             self.save_model()
         # done
         self._memorize('epoch-end', self.epochs)
-        print('epoch %d: train %.4f, %.2f test %.4f %.2f' % (self.epochs,
-              train_l, train_ld, test_l, test_ld))
+        debug_log('epoch %d: train %.4f, %.2f (%.3fs) test %.4f %.2f (%.3fs)' %
+                  (self.epochs, train_l, train_ld, train_tm, test_l, test_ld,
+                   test_tm))
         return
     pass
 

@@ -765,6 +765,7 @@ class KuroyuKI:
         @return test_ld: displayed test acc (e.g. PSNR) """
         test_l_s = torch.zeros(1).to(self._device)
         test_ld_s = torch.zeros(1).to(self._device)
+        test_tm_begin = time.time()
         n = torch.zeros(1).to(self._device)
         for x, y in self._ld_test:
             with torch.no_grad():
@@ -777,13 +778,15 @@ class KuroyuKI:
                 flush_cache(self._device)
         test_l = float(test_l_s / n)
         test_ld = float(test_ld_s / n)
-        return test_l, test_ld
+        test_tm = time.time() - test_tm_begin
+        return test_l, test_ld, test_tm
 
     def epoch(self, force_seed=None):
         """ epoch(force_seed=) -- run epoch
         @param force_seed: set seed if this epoch requires static seed """
         train_l_s = torch.zeros(1).to(self._device)
         train_ld_s = torch.zeros(1).to(self._device)
+        train_tm_begin = time.time()
         n = torch.zeros(1).to(self._device)
         if self._rng:
             if force_seed:
@@ -801,26 +804,31 @@ class KuroyuKI:
             self._optim.zero_grad()
             ls.backward()
             self._optim.step()
-            flush_cache(self._device)
             n += y.shape[0]
             self.backprops += 1
+            flush_cache(self._device)
         self.epochs += 1
         train_l = float(train_l_s / n)
         train_ld = float(train_ld_s / n)
-        test_l, test_ld = float('nan'), float('nan')
+        train_tm = time.time() - train_tm_begin
+        test_l, test_ld, test_tm = float('nan'), float('nan'), float('nan')
         if self.epochs % 10 == 0:
-            test_l, test_ld = self.evaluate_performance()
+            test_l, test_ld, test_tm = self.evaluate_performance()
         # write history
         if self._history:
             self._history.write_record(
                 'add_scalar', 'Loss/train', train_l, self.epochs)
             self._history.write_record(
                 'add_scalar', 'Performance/train', train_ld, self.epochs)
+            self._history.write_record(
+                'add_scalar', 'Time/train', train_tm, self.epochs)
             if test_l >= 0 or test_l <= 0:  # not nan
                 self._history.write_record(
                     'add_scalar', 'Loss/test', test_l, self.epochs)
                 self._history.write_record(
                     'add_scalar', 'Performance/test', test_ld, self.epochs)
+                self._history.write_record(
+                    'add_scalar', 'Time/test', test_tm, self.epochs)
             self.save_model()
         # done
         self._memorize('epoch-end', self.epochs)

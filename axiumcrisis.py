@@ -169,6 +169,8 @@ class InoRI:
             'random': random.getstate(),
             'numpy': numpy.random.get_state(),
             'torch': torch.get_rng_state(),
+            'inori-master': self._master_seed,
+            'inori-step': self._seed_step,
         }
         return states
 
@@ -179,6 +181,8 @@ class InoRI:
         random.setstate(states['random'])
         numpy.random.set_state(states['numpy'])
         torch.set_rng_state(states['torch'])
+        self._master_seed = states['inori-master']
+        self._seed_step = states['inori-step']
         return
     pass
 
@@ -531,6 +535,7 @@ class ShirabE(torch.utils.data.Dataset):
             index, ridx, seed = args[1], args[2], args[3]
             if seed != '':
                 self._cc_seed[ridx] = seed
+                self._rng.seed(seed=seed)
             self._memorize('cache-read', index, ridx, seed)
         return
 

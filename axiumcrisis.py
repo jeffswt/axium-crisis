@@ -81,7 +81,7 @@ class InoRI:
         @param seed: master seed used to initialize all RNGs
         @param history: if recording history is necessary, pass HikarI in
         @param history_id: string id used when recording history """
-        self._module_version = 'InoRI/20191115.a'
+        self._module_version = 'InoRI/20191116.a'
         self._master_seed = ''
         self._seed_step = ''
         self._history = history
@@ -191,7 +191,7 @@ class HikarI:
         """ HikarI(target_path, log_path=None):
         @param target_path: memory output path
         @param log_path: tensorboard log path, auxillary setting """
-        self._module_version = 'HikarI/20191115.a'
+        self._module_version = 'HikarI/20191116.a'
         self._output_path = regularize_path(target_path)
         shutil.rmtree(self._output_path, ignore_errors=True)
         os.mkdir(self._output_path)
@@ -276,7 +276,6 @@ class HikarI:
             getattr(self._tb_writer, func)(*args, **kwargs)
         getattr(self._tb_writer_co, func)(*args, **kwargs)
         self.memorize('__main__', 'write-record', func, args, kwargs)
-        self.flush()
         return
 
     def recall_filter(self, history):
@@ -329,11 +328,17 @@ class TairitsU:
         """ TairitsU(history_path):
         @param history_path: memory input path """
         self._input_path = history_path
-        # logger
-        self._writer_path = regularize_path(self._input_path, 'history.db')
-        self._writer_base = sqlite3.connect(self._writer_path)
-        self._writer = self._writer_base.cursor()
         self._handlers = {}
+        # load cache
+        reader_path = regularize_path(self._input_path, 'history.db')
+        reader_base = sqlite3.connect(reader_path)
+        reader = reader_base.cursor()
+        cache = list(reader.execute('SELECT * FROM logs;'))
+        self._cache = []
+        for _, value in cache:
+            timestamp, *value = json.loads(value)
+            self._cache.append((timestamp, value))
+        reader_base.close()
         return
 
     def __getitem__(self, index):
@@ -343,28 +348,20 @@ class TairitsU:
         @return values: entry itself """
         if not isinstance(index, int):
             raise ValueError('index must be int')
-        res = self._writer.execute(
-            'SELECT entry FROM logs WHERE checkpoint = ?;',
-            (index, ))
-        res = list(res)
-        if len(res) <= 0:
-            raise IndexError('out of bounds')
-        res = res[0][0]
-        timestamp, *res = json.loads(res)
-        return timestamp, list(res)
+        timestamp, res = self._cache[index]
+        return timestamp, res
+
+    def __len__(self):
+        """ __len__() -- len(self) """
+        return len(self._cache)
 
     def __iter__(self):
         """ __iter__() -- for i in self """
-        cnt = 0
-        while True:
-            try:
-                timestamp, val = self[cnt]
-            except IndexError:
-                return
+        for cnt in range(0, len(self._cache)):
+            timestamp, val = self[cnt]
             yield timestamp, val
             if val[0] == '__main__' and val[1] == 'pure-memory':
                 break
-            cnt += 1
         return
 
     def get_blob_path(self, epoch):
@@ -424,7 +421,6 @@ class TairitsU:
 
     def close(self):
         """ close() -- close history recaller """
-        self._writer_base.close()
         return
     pass
 
@@ -452,7 +448,7 @@ class ShirabE(torch.utils.data.Dataset):
         @param history_id: string id to write history as """
         super(ShirabE, self).__init__(**kwargs)
         # set configuration
-        self._module_version = 'ShirabE/20191115.a'
+        self._module_version = 'ShirabE/20191116.a'
         self._device = device if device else torch.device('cpu')
         if not isinstance(cache, dict):
             cache = {'enabled': False}
@@ -632,7 +628,7 @@ class KuroyuKI:
         @param rng: random number generator manager, i.e. InoRI
         @param history: history record manager, i.e. HikarI,
         @param history_id: string id to write into history as """
-        self._module_version = 'KuroyuKI/SR/20191115.a'
+        self._module_version = 'KuroyuKI/SR/20191116.a'
         # initialize model
         self._device = device if device else torch.device('cpu')
         self._model = model.to(self._device)

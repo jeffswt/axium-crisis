@@ -6,34 +6,39 @@
 Save entire experiment process while training deep learning models with
 pytorch. This includes:
 
-  * random number generator states (random, numpy, pytorch)
-  * how is the dataset loaded
-  * model parameters at significant epochs
-  * data written to tensorboard
+  * Random number generator states (random, numpy, pytorch)
+  * How is the dataset loaded
+  * Model parameters at significant epochs
+  * Data written to TensorBoard
 
-You may replay the experiment and fast-forward to an epoch at any time.
+You may replay the experiment and fast-forward to an epoch at any time. For
+example, run #1 includes epoch 1 to 100, run #2 began from epoch 91 in run #1,
+run #3 began from epoch 151 in run #2 and so on. All of those runs share the
+same curve, as the figure shows below (in TensorBoard):
+
+![Same curve](./assets/figure.png)
 
 The project is composed mainly of 6 units:
 
-  * InoRI: random number generator manager
-  * HikarI: experiment history writer
-  * TairitsU: history reader and replay manager
-  * ShirabE: cache-based high performance dataset
-  * KuroyuKI: retroactive model trainer
-  * train: a useful function that connects them all
+  * InoRI: Random number generator manager
+  * HikarI: Experiment history writer
+  * TairitsU: History reader and replay manager
+  * ShirabE: Cache-based high performance dataset
+  * KuroyuKI: Retroactive model trainer
+  * train: A useful function that connects them all
 
 By default, this project is set to optimize with L1 loss, evaluate PSNR and
 gradient descent with Adam (b1 = 0.999, b2 = 0.9).
 
 ## Usage
 
-When you used to write the code like this:
+If you used to write the code like this:
 
 ```python
 model = WaifuModel((48, 48), channels=16, upsample=4)
 ```
 
-In Axium Crisis you write the training code like this:
+Now, in Axium Crisis you can write the training code in this way:
 
 ```python
 import axiumcrisis
@@ -64,7 +69,8 @@ Remember to install requirements with:
 pip install -r requirements.txt
 ```
 
-You might have to install pytorch manually from the official website.
+You might have to [install pytorch](https://pytorch.org/get-started/locally/)
+manually from the official website.
 
 ## Contribution
 

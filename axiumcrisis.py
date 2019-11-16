@@ -595,12 +595,12 @@ class ShirabE(torch.utils.data.Dataset):
             arr_x, arr_y = self._cc_pool[ridx]
             self._cc_cnt[ridx] += 1
             self._memorize('cache-write', ridx, self._cc_cnt[ridx])
+            self._memorize('cache-read', index, ridx, seed)
             if self._cc_cnt[ridx] >= self._ttl:
                 self._cc_cnt[ridx] = 0
                 self._cc_pool[ridx] = None
                 self._cc_buffer.remove(ridx)
                 self._memorize('cache-write', ridx, -1)
-            self._memorize('cache-read', index, ridx, seed)
         else:
             if not 0 <= index < len(self._files):
                 raise AttributeError('index out of range')
